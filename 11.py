@@ -103,3 +103,35 @@ class opc:
         while code==0:
             code = self.op()
         return (code,self.outputs)
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+if __name__=="__main__":
+    panel = np.ones((500,500))
+    x,y=250,250
+    v =[]
+    curDir = 0
+    #0=up 1=right 2=down 3=left
+    computer = opc(sys.argv[1],inputOnly=True,returnOut=True)
+    while True:
+        code,out=computer.run([panel[y][x]],True)
+        if code==-1:
+            break
+        if panel[y][x] != out[0]:
+            panel[y][x]=out[0]
+            if not (x,y) in v:
+                v.append((x,y))
+        if out[1]:
+            curDir=(curDir+1)%4
+        else:
+            curDir=(curDir-1)%4
+        if curDir==0:
+            y-=1
+        elif curDir==1:
+            x+=1
+        elif curDir==2:
+            y+=1
+        else:
+            x-=1
+    print(len(v))
+    plt.imsave('final.png', panel, cmap=cm.gray)
