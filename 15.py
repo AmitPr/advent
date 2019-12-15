@@ -1,3 +1,9 @@
+import numpy as np
+import sys
+import random
+import collections
+
+
 class opc:
     def __init__(self, filename, inputs=[], returnOut=False, inputOnly=False):
         self.inst = [int(x) for x in open(filename).read().split(',')]
@@ -104,3 +110,82 @@ class opc:
         while code == 0:
             code = self.op()
         return (code, self.outputs)
+def dXY(dir):
+    dir+=1
+    if dir == 1:
+        return 0,1
+    elif dir == 2:
+        return 0,-1
+    elif dir == 3:
+        return 1,0
+    else:
+        return -1,0
+
+def do(f,fdir,cpu,dist):
+    possibles = [0,1,2,3]
+    if not fdir is None:
+        possibles.remove(fdir)
+    state = cpu.inst.copy()
+    i = possibles[0]
+    x,y = f
+    while True:
+        cpu.inst = state.copy()
+        r = cpu.run([i+1],True)[1][0]
+        if r == 2:
+            nx,ny = x+dXY(i)[0],y+dXY(i)[1]
+            print(dist+1)
+            return True,cpu,nx,ny
+        elif r == 1:
+            nx,ny = x+dXY(i)[0],y+dXY(i)[1]
+            if i == 0:
+                fr = 1
+            elif i == 1:
+                fr = 0
+            elif i == 2:
+                fr = 3
+            else:
+                fr = 2
+            k = do((nx,ny),fr,cpu,dist+1)
+            if k[0]:
+                return k
+        possibles.remove(i)
+        if len(possibles)==0:
+            return False,None
+        i = possibles[0]
+
+def do2(f,fdir,cpu,dist):
+    global maxD
+    possibles = [0,1,2,3]
+    if not fdir is None:
+        possibles.remove(fdir)
+    state = cpu.inst.copy()
+    i = possibles[0]
+    x,y = f
+    if dist > maxD:
+        maxD = dist
+    while True:
+        cpu.inst = state.copy()
+        r = cpu.run([i+1],True)[1][0]
+        if r == 1 or r ==2:
+            nx,ny = x+dXY(i)[0],y+dXY(i)[1]
+            if i == 0:
+                fr = 1
+            elif i == 1:
+                fr = 0
+            elif i == 2:
+                fr = 3
+            else:
+                fr = 2
+            do2((nx,ny),fr,cpu,dist+1)
+        possibles.remove(i)
+        if len(possibles)==0:
+            return
+        i = possibles[0]
+
+
+if __name__ == "__main__":
+    computer = opc(sys.argv[1], returnOut=True,inputOnly=True)
+    _,computer,tx,ty = do((0,0),None,computer,0)
+    maxD = 0
+    do2((tx,ty),None,computer,0)
+    print(maxD)
